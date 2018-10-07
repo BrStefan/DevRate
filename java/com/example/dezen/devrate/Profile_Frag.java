@@ -12,11 +12,14 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -26,8 +29,12 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,26 +42,34 @@ import static android.app.Activity.RESULT_OK;
 
 public class Profile_Frag extends Fragment{
 
-    private Button butChoose,butUpload;
+    private Button butChoose,butUpload,butSkill;
+    private EditText text;
     private ImageView seePhoto;
     private final int IMG_REQUEST = 1;
     private Bitmap img;
     private String UploadURL = "http://xoldoxapp.000webhostapp.com/ImageUploadApp/insertphoto.php";
+    private String SkillURL = "http://xoldoxapp.000webhostapp.com/insertskill.php";
+    private String skill;
     SharedPreferences sharedPref;
     SharedPreferences.Editor editor;
-    ProgressDialog progressDialog;
+    ProgressDialog progressDialog,progressDialog1;
+    ArrayList<String> Skill_List;
+    View view;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
 
-        View view;
         view = inflater.inflate(R.layout.profile_frag,container,false);
 
         butChoose = (Button) view.findViewById(R.id.Gallery_button);
         butUpload = (Button) view.findViewById(R.id.Upload_button);
+        butSkill = (Button) view.findViewById(R.id.InsertSkill);
         seePhoto = (ImageView) view.findViewById(R.id.photoview);
+        text = (EditText) view.findViewById(R.id.Skill);
+        Skill_List = new ArrayList<String>();
+
 
         butChoose.setOnClickListener(
                 new Button.OnClickListener () {
@@ -76,9 +91,27 @@ public class Profile_Frag extends Fragment{
                     }
                 }
         );
+
+        butSkill.setOnClickListener(
+                new Button.OnClickListener () {
+                    @Override
+                    public void onClick(View view) {
+                        insertSkill();
+                    }
+                }
+        );
+
+        initRecyclerView();
         return view;
     }
 
+    private void initRecyclerView()
+    {
+        RecyclerView recyclerView = view.findViewById(R.id.rv);
+        RecyclerViewAdapter_Skills adapter = new RecyclerViewAdapter_Skills(Skill_List, getContext());
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -181,4 +214,62 @@ public class Profile_Frag extends Fragment{
 
         return resizedBitmap;
     }
+
+    void insertSkill()
+    {
+        skill = text.getText().toString();
+        progressDialog1 = new ProgressDialog(getActivity());
+        progressDialog1.setMessage("Inserting skill, please wait...");
+        progressDialog1.show();
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, SkillURL,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                String result = jsonObject.getString("response");
+                                progressDialog1.dismiss();
+                                if (result.equalsIgnoreCase("nothing"))
+                                {
+                                    Toast.makeText(getContext(), "Please insert something in the skill field!", Toast.LENGTH_LONG).show();
+                                }
+                                else if(result.equalsIgnoreCase("exists"))
+                                {
+                                    Toast.makeText(getContext(), "Skill already introduced!", Toast.LENGTH_LONG).show();
+                                }
+                                else if (result.equalsIgnoreCase("ok"))
+                                {
+                                    Skill_List.add(skill);
+                                    Toast.makeText(getContext(), "Image successfully uploaded!", Toast.LENGTH_LONG).show();
+                                }
+                            }
+                            catch (JSONException e)
+                            {
+                                e.printStackTrace();
+                            }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+
+            }
+        })
+
+        {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String,String> params = new HashMap<>();
+
+                params.put("name",getName());
+                params.put("skill",skill);
+
+                return params;
+
+            }
+        };
+
+        com.codinginflow.volleysingletonexample.MySingleton.getInstance(getActivity()).addToRequestQueue(stringRequest) ;
+    }
+
 }

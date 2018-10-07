@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/RelativeLayout_skill">
+
+
+    <TextView
+        android:id="@+id/Skill_text"
+        android:layout_width="106dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="47dp"
+        android:text="TextView" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="false"
+        android:layout_marginEnd="85dp"
+        android:text="Delete" />
+</RelativeLayout>
